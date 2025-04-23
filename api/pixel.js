@@ -1,22 +1,35 @@
 export default async function handler(req, res) {
-  const { email, university, company, type, t } = req.query;
+  const { email, university, company, type, sentAt } = req.query;
 
-  const scriptUrl = "https://script.google.com/macros/s/AKfycbzgNi6Vnr_kF_3moMtoNVPbsrOtBfH1GCAJNjfzgC6lmaz1QxbYsJmP9cdOpaB3EpR7/exec";
+  const scriptUrl = "https://script.google.com/macros/s/AKfycbyF4m_qXzIyE2sAVinTmGHie8szHBz2RoNpYAPMXmHoqBizD3L8jtLbNwpy4CpQBePr/exec";
+
+  console.log("📩 [PIXEL] 요청 수신됨");
+  console.log("받은 쿼리값:", { email, university, company, type, sentAt });
 
   try {
+    const payload = {
+      type: type || "open",
+      email,
+      university,
+      company,
+      sentAt,                    // 발송 시각
+      time: new Date().toISOString(),  // ✅ 열람 시각: 현재 시각
+    };
+
+    console.log("📡 Google Apps Script로 POST 요청 전송 ▶️", payload);
+
     await fetch(scriptUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        type: type || "open",
-        email,
-        university,
-        company,
-        time: t,
-      }),
+      body: JSON.stringify(payload),
     });
 
-    const pixel = Buffer.from("R0lGODlhAQABAIABAP///wAAACwAAAAAAQABAAACAkQBADs=", "base64");
+    console.log("✅ Google Apps Script POST 완료");
+
+    const pixel = Buffer.from(
+      "R0lGODlhAQABAIABAP///wAAACwAAAAAAQABAAACAkQBADs=",
+      "base64"
+    );
     res.setHeader("Content-Type", "image/gif");
     res.setHeader("Content-Length", pixel.length);
     res.status(200).send(pixel);
